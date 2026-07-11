@@ -1,0 +1,8 @@
+{
+  "name": "Cafe POS & QR Menu",
+  "description": "Real-time QR-based restaurant ordering web app with a manager dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

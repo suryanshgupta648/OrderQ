@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  @keyframes scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(calc(-50% - 0.5rem)); }
+  }
+
+  .animate-scroll {
+    animation: scroll 30s linear infinite;
+  }
+
+  .animate-scroll:hover {
+    animation-play-state: paused;
+  }
+}
+
+html, body {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Dark Mode Overrides */
+.dark .bg-white { background-color: #1e293b !important; }
+.dark .bg-white\/40, .dark .bg-white\/50 { background-color: rgba(30, 41, 59, 0.5) !important; }
+.dark .bg-slate-50, .dark .bg-slate-50\/50, .dark .bg-slate-50\/80 { background-color: #0f172a !important; }
+.dark .bg-slate-100, .dark .bg-slate-100\/50 { background-color: #1e293b !important; }
+.dark .text-slate-900 { color: #f8fafc !important; }
+.dark .text-slate-800 { color: #f1f5f9 !important; }
+.dark .text-slate-600 { color: #cbd5e1 !important; }
+.dark .text-slate-500 { color: #94a3b8 !important; }
+.dark .text-slate-400 { color: #64748b !important; }
+.dark .border-slate-200, .dark .border-slate-200\/50, .dark .border-slate-200\/60 { border-color: #334155 !important; }
+.dark .border-slate-100 { border-color: #1e293b !important; }
+
+/* Keep colored backgrounds subtle in dark mode */
+.dark .bg-indigo-50 { background-color: rgba(67, 56, 202, 0.15) !important; }
+.dark .bg-amber-50 { background-color: rgba(217, 119, 6, 0.15) !important; }
+.dark .bg-emerald-50 { background-color: rgba(5, 150, 105, 0.15) !important; }
+.dark .bg-rose-50 { background-color: rgba(225, 29, 72, 0.15) !important; }
+
+.dark .text-indigo-700 { color: #818cf8 !important; }
+
+/* MUI Paper overrides */
+.dark .MuiPaper-root { background-color: #1e293b !important; color: #f8fafc !important; }
