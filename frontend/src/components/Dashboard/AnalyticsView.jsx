@@ -20,7 +20,7 @@ import * as XLSX from 'xlsx';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
-import { MENU_ITEMS, CATEGORIES } from '../data';
+import { MENU_ITEMS, CATEGORIES } from '../../data';
 
 // --- MOCK DATA GENERATOR ---
 const generateMockData = () => {

@@ -1,9 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import CustomerMenu from './components/CustomerMenu';
-import Dashboard from './components/Dashboard';
-import LoginPage from './components/LoginPage';
+import CustomerMenu from './pages/CustomerMenuPage';
+import Dashboard from './pages/DashboardPage';
+import LoginPage from './pages/LoginPage';
 import { AuthProvider, useAuth } from './AuthContext';
 
 const theme = createTheme({
