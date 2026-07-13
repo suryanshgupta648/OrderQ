@@ -10,7 +10,13 @@ import java.util.List;
 public class RestaurantState {
     
     @Id
-    private Long id = 1L; // Singleton pattern essentially
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Restaurant restaurant;
     
     private String kitchenStatus = "LIVE";
     
@@ -32,4 +38,7 @@ public class RestaurantState {
     
     public List<String> getDisabledCategories() { return disabledCategories; }
     public void setDisabledCategories(List<String> disabledCategories) { this.disabledCategories = disabledCategories; }
+    
+    public Restaurant getRestaurant() { return restaurant; }
+    public void setRestaurant(Restaurant restaurant) { this.restaurant = restaurant; }
 }

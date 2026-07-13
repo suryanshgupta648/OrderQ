@@ -47,10 +47,13 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         }
 
+        Long restaurantId = null;
+
         if (token != null) {
             try {
                 username = jwtUtil.extractUsername(token);
                 role = jwtUtil.extractRole(token);
+                restaurantId = jwtUtil.extractRestaurantId(token);
             } catch (Exception e) {
                 // Invalid token
             }
@@ -58,9 +61,15 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (jwtUtil.validateToken(token)) {
+                CustomUserDetails userDetails = new CustomUserDetails(
+                        username, 
+                        restaurantId, 
+                        Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+                );
+                
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                         new UsernamePasswordAuthenticationToken(
-                                username, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase())));
+                                userDetails, null, userDetails.getAuthorities());
                 usernamePasswordAuthenticationToken
                         .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);

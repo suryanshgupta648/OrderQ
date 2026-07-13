@@ -20,10 +20,23 @@ public class RestaurantOrder {
     private String status;
     private String rejectReason;
     private String timestamp;
+    
+    // Billing Fields
+    private Double discount;
+    private Double tax;
+    private String paymentMethod;
+    private String cashierName;
+    private String invoiceNumber;
+    private String orderType; // "ONLINE" or "MANUAL"
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "order_id")
     private List<OrderItem> items;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Restaurant restaurant;
 
     // Getters and Setters
     public String getId() { return id; }
@@ -52,4 +65,25 @@ public class RestaurantOrder {
     
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }
+    
+    public Restaurant getRestaurant() { return restaurant; }
+    public void setRestaurant(Restaurant restaurant) { this.restaurant = restaurant; }
+
+    public Double getDiscount() { return discount; }
+    public void setDiscount(Double discount) { this.discount = discount; }
+
+    public Double getTax() { return tax; }
+    public void setTax(Double tax) { this.tax = tax; }
+
+    public String getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+
+    public String getCashierName() { return cashierName; }
+    public void setCashierName(String cashierName) { this.cashierName = cashierName; }
+
+    public String getInvoiceNumber() { return invoiceNumber; }
+    public void setInvoiceNumber(String invoiceNumber) { this.invoiceNumber = invoiceNumber; }
+
+    public String getOrderType() { return orderType; }
+    public void setOrderType(String orderType) { this.orderType = orderType; }
 }

@@ -3,12 +3,16 @@ package com.desibites.controller;
 import com.desibites.entity.RestaurantOrder;
 import com.desibites.entity.RestaurantState;
 import com.desibites.entity.WaiterRequest;
+import com.desibites.entity.Restaurant;
 import com.desibites.repository.OrderRepository;
 import com.desibites.repository.RestaurantStateRepository;
 import com.desibites.repository.WaiterRequestRepository;
+import com.desibites.repository.RestaurantRepository;
+import com.desibites.security.CustomUserDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -29,22 +33,46 @@ public class RestaurantController {
     @Autowired
     private RestaurantStateRepository stateRepository;
 
-    private RestaurantState getState() {
-        return stateRepository.findById(1L).orElseGet(() -> {
+    @Autowired
+    private RestaurantRepository restaurantRepository;
+
+    private Long getRestaurantId(String headerId) {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails userDetails) {
+            return userDetails.getRestaurantId();
+        }
+        if (headerId != null && !headerId.isEmpty()) {
+            return Long.parseLong(headerId);
+        }
+        return 1L; // Fallback to seeded restaurant for demo
+    }
+
+    private Restaurant getRestaurant(Long id) {
+        return restaurantRepository.findById(id).orElseGet(() -> {
+            Restaurant r = new Restaurant();
+            r.setId(id);
+            return r;
+        });
+    }
+
+    private RestaurantState getState(Long restaurantId) {
+        return stateRepository.findByRestaurantId(restaurantId).orElseGet(() -> {
             RestaurantState state = new RestaurantState();
-            state.setId(1L);
+            state.setRestaurant(getRestaurant(restaurantId));
             return stateRepository.save(state);
         });
     }
 
     // --- Orders ---
     @GetMapping("/orders")
-    public List<RestaurantOrder> getOrders() {
-        return orderRepository.findAll().stream().distinct().toList();
+    public List<RestaurantOrder> getOrders(@RequestHeader(value = "X-Restaurant-Id", required = false) String headerId) {
+        return orderRepository.findByRestaurantId(getRestaurantId(headerId)).stream().distinct().toList();
     }
 
     @PostMapping("/orders")
-    public ResponseEntity<?> createOrder(@RequestBody RestaurantOrder order) {
+    public ResponseEntity<?> createOrder(@RequestHeader(value = "X-Restaurant-Id", required = false) String headerId, @RequestBody RestaurantOrder order) {
+        Long restaurantId = getRestaurantId(headerId);
+        order.setRestaurant(getRestaurant(restaurantId));
         RestaurantOrder savedOrder = orderRepository.save(order);
         Map<String, Object> resp = new HashMap<>();
         resp.put("success", true);
@@ -54,15 +82,34 @@ public class RestaurantController {
 
     @PatchMapping("/orders/{id}")
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<?> updateOrder(@PathVariable String id, @RequestBody Map<String, Object> updates) {
+    public ResponseEntity<?> updateOrder(@RequestHeader(value = "X-Restaurant-Id", required = false) String headerId, @PathVariable String id, @RequestBody Map<String, Object> updates) {
         Optional<RestaurantOrder> orderOpt = orderRepository.findById(id);
         if (orderOpt.isPresent()) {
             RestaurantOrder order = orderOpt.get();
+            // Optional: verify order.getRestaurant().getId() == getRestaurantId(headerId)
             if (updates.containsKey("status")) {
                 order.setStatus((String) updates.get("status"));
             }
             if (updates.containsKey("rejectReason")) {
                 order.setRejectReason((String) updates.get("rejectReason"));
+            }
+            if (updates.containsKey("discount")) {
+                order.setDiscount(((Number) updates.get("discount")).doubleValue());
+            }
+            if (updates.containsKey("tax")) {
+                order.setTax(((Number) updates.get("tax")).doubleValue());
+            }
+            if (updates.containsKey("paymentMethod")) {
+                order.setPaymentMethod((String) updates.get("paymentMethod"));
+            }
+            if (updates.containsKey("cashierName")) {
+                order.setCashierName((String) updates.get("cashierName"));
+            }
+            if (updates.containsKey("invoiceNumber")) {
+                order.setInvoiceNumber((String) updates.get("invoiceNumber"));
+            }
+            if (updates.containsKey("orderType")) {
+                order.setOrderType((String) updates.get("orderType"));
             }
             orderRepository.save(order);
             Map<String, Object> resp = new HashMap<>();
@@ -75,16 +122,16 @@ public class RestaurantController {
 
     // --- Kitchen Status ---
     @GetMapping("/kitchen-status")
-    public Map<String, String> getKitchenStatus() {
+    public Map<String, String> getKitchenStatus(@RequestHeader(value = "X-Restaurant-Id", required = false) String headerId) {
         Map<String, String> resp = new HashMap<>();
-        resp.put("status", getState().getKitchenStatus());
+        resp.put("status", getState(getRestaurantId(headerId)).getKitchenStatus());
         return resp;
     }
 
     @PostMapping("/kitchen-status")
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<?> updateKitchenStatus(@RequestBody Map<String, String> body) {
-        RestaurantState state = getState();
+    public ResponseEntity<?> updateKitchenStatus(@RequestHeader(value = "X-Restaurant-Id", required = false) String headerId, @RequestBody Map<String, String> body) {
+        RestaurantState state = getState(getRestaurantId(headerId));
         state.setKitchenStatus(body.get("status"));
         stateRepository.save(state);
         
@@ -96,8 +143,8 @@ public class RestaurantController {
 
     // --- Menu Status ---
     @GetMapping("/menu-status")
-    public Map<String, Object> getMenuStatus() {
-        RestaurantState state = getState();
+    public Map<String, Object> getMenuStatus(@RequestHeader(value = "X-Restaurant-Id", required = false) String headerId) {
+        RestaurantState state = getState(getRestaurantId(headerId));
         Map<String, Object> resp = new HashMap<>();
         resp.put("disabledItems", state.getDisabledItems());
         resp.put("disabledCategories", state.getDisabledCategories());
@@ -106,8 +153,8 @@ public class RestaurantController {
 
     @PostMapping("/menu-status/items")
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<?> updateDisabledItems(@RequestBody Map<String, List<String>> body) {
-        RestaurantState state = getState();
+    public ResponseEntity<?> updateDisabledItems(@RequestHeader(value = "X-Restaurant-Id", required = false) String headerId, @RequestBody Map<String, List<String>> body) {
+        RestaurantState state = getState(getRestaurantId(headerId));
         state.setDisabledItems(body.get("items"));
         stateRepository.save(state);
         
@@ -119,8 +166,8 @@ public class RestaurantController {
 
     @PostMapping("/menu-status/categories")
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<?> updateDisabledCategories(@RequestBody Map<String, List<String>> body) {
-        RestaurantState state = getState();
+    public ResponseEntity<?> updateDisabledCategories(@RequestHeader(value = "X-Restaurant-Id", required = false) String headerId, @RequestBody Map<String, List<String>> body) {
+        RestaurantState state = getState(getRestaurantId(headerId));
         state.setDisabledCategories(body.get("categories"));
         stateRepository.save(state);
         
@@ -132,12 +179,14 @@ public class RestaurantController {
 
     // --- Waiter Requests ---
     @GetMapping("/waiter-requests")
-    public List<WaiterRequest> getWaiterRequests() {
-        return waiterRequestRepository.findAll();
+    public List<WaiterRequest> getWaiterRequests(@RequestHeader(value = "X-Restaurant-Id", required = false) String headerId) {
+        return waiterRequestRepository.findByRestaurantId(getRestaurantId(headerId));
     }
 
     @PostMapping("/waiter-requests")
-    public ResponseEntity<?> createWaiterRequest(@RequestBody WaiterRequest request) {
+    public ResponseEntity<?> createWaiterRequest(@RequestHeader(value = "X-Restaurant-Id", required = false) String headerId, @RequestBody WaiterRequest request) {
+        Long restaurantId = getRestaurantId(headerId);
+        request.setRestaurant(getRestaurant(restaurantId));
         WaiterRequest saved = waiterRequestRepository.save(request);
         Map<String, Object> resp = new HashMap<>();
         resp.put("success", true);

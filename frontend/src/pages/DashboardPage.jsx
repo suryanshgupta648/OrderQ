@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Typography, Card, CardContent, Button, Chip, 
   Divider, IconButton, Tooltip, Switch, FormControlLabel,
@@ -12,26 +13,34 @@ import {
   LayoutDashboard, PlayCircle, CheckCircle, BookOpen, 
   BellRing, MapPin, History, Search, Clock, Check, X,
   ChevronRight, CircleDollarSign, Utensils,
-  ChefHat, Moon, Sun, Camera, TrendingUp
+  ChefHat, Moon, Sun, Camera, TrendingUp, Menu as MenuIcon
 } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import Analytics from '../components/Dashboard/AnalyticsView';
 import StatCards from '../components/Dashboard/StatCards';
+import BillingPortal from './BillingPortal';
 
 const SIDEBAR_ITEMS = [
   { id: 'DASHBOARD', label: 'Overview', icon: LayoutDashboard },
   { id: 'ANALYTICS', label: 'Analytics', icon: TrendingUp },
   { id: 'ORDERS', label: 'Orders', icon: ChefHat },
   { id: 'WAITER', label: 'Waiter Requests', icon: BellRing },
+  { id: 'BILLING', label: 'Billing POS', icon: CircleDollarSign },
   { id: 'HISTORY', label: 'Order History', icon: History },
   { id: 'MANAGER', label: 'Menu Manager', icon: BookOpen },
+  { id: 'DIVIDER', type: 'divider' },
+  { id: 'KITCHEN_APP', label: 'Kitchen Portal', icon: ChefHat, isApp: true, path: '/kitchen' },
+  { id: 'MENU_APP', label: 'Customer Menu', icon: Utensils, isApp: true, path: '/menu' },
 ];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const { logout, user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [pulsingOrders, setPulsingOrders] = useState(new Set());
-  const [activeTab, setActiveTab] = useState('DASHBOARD');
+  const [activeTab, setActiveTab] = useState(user?.role === 'CASHIER' ? 'BILLING' : 'DASHBOARD');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [kitchenStatus, setKitchenStatus] = useState('LIVE');
   const [disabledItems, setDisabledItems] = useState([]);
   const [disabledCategories, setDisabledCategories] = useState([]);
@@ -51,7 +60,6 @@ export default function Dashboard() {
     });
   };
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
-  const { logout, user } = useAuth();
   const [profilePic, setProfilePic] = useState(() => localStorage.getItem('desi_bites_pic') || 'https://api.dicebear.com/7.x/notionists/svg?seed=Admin&backgroundColor=e2e8f0');
   const [picModalOpen, setPicModalOpen] = useState(false);
   const [newPicUrl, setNewPicUrl] = useState('');
@@ -93,11 +101,12 @@ export default function Dashboard() {
     const fetchAllData = async () => {
       if (isMutating.current) return;
       try {
+        const headers = user?.restaurantId ? { 'X-Restaurant-Id': user.restaurantId } : {};
         const [ordersRes, kitchenRes, menuRes, waiterRes] = await Promise.all([
-          fetch('/api/orders'),
-          fetch('/api/kitchen-status'),
-          fetch('/api/menu-status'),
-          fetch('/api/waiter-requests')
+          fetch('/api/orders', { headers }),
+          fetch('/api/kitchen-status', { headers }),
+          fetch('/api/menu-status', { headers }),
+          fetch('/api/waiter-requests', { headers })
         ]);
         
         const isJson = (res) => res.ok && res.headers.get("content-type")?.includes("application/json");
@@ -386,7 +395,8 @@ export default function Dashboard() {
     <div className="flex h-screen bg-slate-50 font-sans overflow-hidden">
       
       {/* Sidebar */}
-      <div className="w-[260px] bg-white border-r border-slate-200 text-slate-800 flex flex-col shrink-0 relative z-20">
+      {isSidebarOpen && (
+        <div className="w-[260px] bg-white border-r border-slate-200 text-slate-800 flex flex-col shrink-0 relative z-20 transition-all duration-300 ease-in-out">
         <div className="p-8 flex items-center gap-3">
            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-md shadow-indigo-500/20">
               <span className="text-white font-extrabold text-xl">D</span>
@@ -395,7 +405,32 @@ export default function Dashboard() {
         </div>
 
         <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto mt-2 hide-scrollbar pb-6">
-           {SIDEBAR_ITEMS.map(item => {
+           {SIDEBAR_ITEMS.filter(item => {
+             if (item.type === 'divider') return true;
+             if (!user || !user.role) return false;
+             const role = user.role;
+             if (role === 'MANAGER' || role === 'SUPER_ADMIN') return true;
+             if (role === 'CASHIER') return ['ORDERS', 'WAITER', 'HISTORY', 'BILLING'].includes(item.id);
+             if (role === 'KITCHEN') return ['ORDERS', 'KITCHEN_APP'].includes(item.id);
+             return false;
+           }).map(item => {
+             if (item.type === 'divider') {
+               return <div key={item.id} className="my-3 border-t border-slate-100" />;
+             }
+             if (item.isApp) {
+               return (
+                 <button 
+                   key={item.id}
+                   onClick={() => navigate(item.path)}
+                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                 >
+                   <item.icon className="h-5 w-5 text-slate-400" strokeWidth={2} />
+                   {item.label}
+                   <ChevronRight className="ml-auto h-4 w-4 text-slate-300" />
+                 </button>
+               );
+             }
+             
              const isActive = activeTab === item.id;
              const badge = getBadgeForTab(item.id);
              return (
@@ -422,13 +457,28 @@ export default function Dashboard() {
            })}
         </nav>
       </div>
+      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden relative w-full bg-slate-50/50">
         {/* Top Header */}
-        <header className="h-[90px] flex items-center justify-between px-10 shrink-0 border-b border-slate-200/50 bg-white/50 backdrop-blur-sm">
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{activeLabel}</h1>
+        <header className="h-[90px] flex items-center justify-between px-10 shrink-0 border-b border-slate-200/50 bg-white/50 backdrop-blur-sm z-10">
           <div className="flex items-center gap-4">
+            <IconButton onClick={() => setIsSidebarOpen(!isSidebarOpen)} edge="start" sx={{ color: '#64748b' }}>
+              <MenuIcon />
+            </IconButton>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">{activeLabel}</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <Tooltip title="Billing POS">
+              <button 
+                onClick={() => setActiveTab('BILLING')}
+                className="relative bg-indigo-50 p-2.5 rounded-full border border-indigo-100 shadow-sm hover:shadow-md transition-shadow text-indigo-600 hover:text-indigo-800"
+              >
+                <CircleDollarSign size={20} />
+              </button>
+            </Tooltip>
+
             <Tooltip title="Waiter Requests">
               <button 
                 onClick={() => setActiveTab('WAITER')}
@@ -606,6 +656,19 @@ export default function Dashboard() {
                      )}
                    </div>
                  </div>
+               </motion.div>
+             )}
+             
+             {activeTab === 'BILLING' && (
+               <motion.div 
+                 key="billing"
+                 initial={{ opacity: 0, y: 10 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 exit={{ opacity: 0, y: -10 }}
+                 transition={{ duration: 0.2 }}
+                 className="h-[calc(100vh-140px)] -mt-4 -mx-4"
+               >
+                 <BillingPortal />
                </motion.div>
              )}
              

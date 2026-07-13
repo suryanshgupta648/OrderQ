@@ -17,6 +17,11 @@ public class WaiterRequest {
     private String status;
     private String timestamp;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "restaurant_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Restaurant restaurant;
+
     // Getters and setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -29,4 +34,7 @@ public class WaiterRequest {
     
     public String getTimestamp() { return timestamp; }
     public void setTimestamp(String timestamp) { this.timestamp = timestamp; }
+    
+    public Restaurant getRestaurant() { return restaurant; }
+    public void setRestaurant(Restaurant restaurant) { this.restaurant = restaurant; }
 }

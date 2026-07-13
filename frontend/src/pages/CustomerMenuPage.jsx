@@ -22,6 +22,7 @@ import { MENU_ITEMS, CATEGORIES } from '../data';
 export default function CustomerMenu() {
   const [searchParams] = useSearchParams();
   const tableNumber = searchParams.get('table') || 'Takeaway';
+  const restaurantId = searchParams.get('restaurant');
   
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -65,11 +66,12 @@ export default function CustomerMenu() {
       const latestOrderIds = storedIds ? JSON.parse(storedIds) : myOrderIds;
 
       try {
+        const headers = restaurantId ? { 'X-Restaurant-Id': restaurantId } : {};
         const [ordersRes, kitchenRes, menuRes, waiterRes] = await Promise.all([
-          fetch('/api/orders'),
-          fetch('/api/kitchen-status'),
-          fetch('/api/menu-status'),
-          fetch('/api/waiter-requests')
+          fetch('/api/orders', { headers }),
+          fetch('/api/kitchen-status', { headers }),
+          fetch('/api/menu-status', { headers }),
+          fetch('/api/waiter-requests', { headers })
         ]);
 
         const isJson = (res) => res.ok && res.headers.get("content-type")?.includes("application/json");
@@ -189,9 +191,12 @@ export default function CustomerMenu() {
       
       let success = false;
       try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (restaurantId) headers['X-Restaurant-Id'] = restaurantId;
+
         const res = await fetch('/api/waiter-requests', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(newReq)
         });
         const isJson = res.ok && res.headers.get("content-type")?.includes("application/json");
@@ -360,9 +365,12 @@ export default function CustomerMenu() {
 
     let success = false;
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (restaurantId) headers['X-Restaurant-Id'] = restaurantId;
+
       const response = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(orderPayload)
       });
 
@@ -731,44 +739,68 @@ export default function CustomerMenu() {
         </div>
       </div>
 
-      {/* Recommended */}
+      {/* Recommended Section - Premium Design */}
       {!searchQuery && (
-        <div className="pt-6 mb-6 px-4">
-          <div className="flex items-center gap-2 mb-3">
-            <StarIcon sx={{ color: '#F59E0B' }} />
-            <Typography variant="h6" className="font-bold text-gray-900">Recommended</Typography>
+        <div className="pt-6 mb-8">
+          <div className="flex items-center justify-between px-6 mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center shadow-md shadow-orange-500/30">
+                <StarIcon sx={{ color: 'white', fontSize: 18 }} />
+              </div>
+              <Typography variant="h6" className="font-extrabold text-gray-900 tracking-tight">Chef's Specials</Typography>
+            </div>
+            <Typography variant="caption" className="font-bold text-[#E23744] uppercase tracking-widest">
+              Swipe
+            </Typography>
           </div>
-          <div className="overflow-hidden hide-scrollbar">
-            <div className="flex gap-4 pb-4 animate-scroll w-max">
-              {[...MENU_ITEMS.filter(item => item.recommended), ...MENU_ITEMS.filter(item => item.recommended)].map((item, idx) => (
-              <Card key={`rec-${item.id}-${idx}`} elevation={0} className={`border border-gray-200 shadow-sm shrink-0 w-64 rounded-2xl flex flex-col ${isItemDisabled(item) ? 'opacity-60' : ''}`}>
-                <div className="w-full h-32 relative">
-                  <img src={item.image} alt={item.name} className={`w-full h-full object-cover rounded-t-2xl ${isItemDisabled(item) ? 'grayscale' : ''}`} />
-                  <div className="absolute top-2 right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">
-                    Bestseller
+          
+          <div className="overflow-x-auto hide-scrollbar px-6 pb-6 snap-x snap-mandatory">
+            <div className="flex gap-5 w-max">
+              {MENU_ITEMS.filter(item => item.recommended).map((item, idx) => (
+                <div 
+                  key={`rec-${item.id}`} 
+                  className={`relative shrink-0 w-[280px] h-[340px] rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.12)] snap-center group ${isItemDisabled(item) ? 'opacity-70' : ''}`}
+                >
+                  <img 
+                    src={item.image} 
+                    alt={item.name} 
+                    className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 ${isItemDisabled(item) ? 'grayscale' : ''}`} 
+                  />
+                  
+                  {/* Premium Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/10"></div>
+                  
+                  {/* Floating Bestseller Tag */}
+                  <div className="absolute top-4 left-4 bg-white/20 backdrop-blur-md border border-white/20 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                    <StarIcon sx={{ fontSize: 14, color: '#FCD34D' }} /> BESTSELLER
+                  </div>
+
+                  {/* Unavailable Tag */}
+                  {isItemDisabled(item) && (
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-xl font-bold border border-white/20">
+                      Out of Stock
+                    </div>
+                  )}
+                  
+                  {/* Content Area */}
+                  <div className="absolute bottom-0 left-0 w-full p-5 flex flex-col justify-end">
+                    <h3 className="text-xl font-black text-white leading-tight mb-1.5">{item.name}</h3>
+                    <p className="text-sm font-medium text-gray-300 line-clamp-2 leading-relaxed mb-4">{item.description}</p>
+                    
+                    <div className="flex justify-between items-center mt-auto">
+                      <span className="text-2xl font-black text-white drop-shadow-md">
+                        ₹{(item.price * 25).toFixed(0)}
+                      </span>
+                      <div className="scale-110 origin-bottom-right shadow-xl rounded-xl">
+                        <CartControl item={item} />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <CardContent className="p-3 flex-1 flex flex-col justify-between">
-                  <div>
-                    <Typography variant="subtitle1" className="font-bold text-gray-900 leading-tight mb-1 line-clamp-1">
-                      {item.name}
-                    </Typography>
-                    <Typography variant="body2" className="text-gray-500 line-clamp-2 text-xs">
-                      {item.description}
-                    </Typography>
-                  </div>
-                  <div className="flex justify-between items-center mt-3 h-8">
-                    <Typography variant="subtitle2" className="font-bold text-gray-900">
-                      ₹{(item.price * 25).toFixed(0)}
-                    </Typography>
-                    <CartControl item={item} />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+              ))}
             </div>
           </div>
-      </div>
+        </div>
       )}
 
       {/* Category Accordions */}

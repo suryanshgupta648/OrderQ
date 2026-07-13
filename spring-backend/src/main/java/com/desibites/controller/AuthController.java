@@ -19,24 +19,28 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    // Hardcoded user for demo
-    private final String ADMIN_EMAIL = "admin@desibites.com";
-    private final String ADMIN_PASS = "password123";
-    private final String ADMIN_ROLE = "MANAGER";
+    @Autowired
+    private com.desibites.repository.UserRepository userRepository;
+
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials, HttpServletResponse response) {
         String email = credentials.get("email");
         String password = credentials.get("password");
 
-        if (ADMIN_EMAIL.equals(email) && ADMIN_PASS.equals(password)) {
-            String token = jwtUtil.generateToken(email, ADMIN_ROLE);
+        java.util.Optional<com.desibites.entity.User> userOpt = userRepository.findByEmail(email);
+
+        if (userOpt.isPresent() && passwordEncoder.matches(password, userOpt.get().getPassword())) {
+            com.desibites.entity.User dbUser = userOpt.get();
+            Long restaurantId = dbUser.getRestaurant() != null ? dbUser.getRestaurant().getId() : null;
+            String token = jwtUtil.generateToken(email, dbUser.getRole(), restaurantId);
 
             Cookie cookie = new Cookie("token", token);
             cookie.setHttpOnly(true);
             cookie.setPath("/");
             cookie.setMaxAge(24 * 60 * 60); // 1 day
-            // cookie.setSecure(true); // Uncomment in production with HTTPS
             response.addCookie(cookie);
 
             Map<String, Object> resp = new HashMap<>();
@@ -44,7 +48,10 @@ public class AuthController {
             
             Map<String, String> user = new HashMap<>();
             user.put("email", email);
-            user.put("role", ADMIN_ROLE);
+            user.put("role", dbUser.getRole());
+            if (restaurantId != null) {
+                user.put("restaurantId", restaurantId.toString());
+            }
             resp.put("user", user);
             
             return ResponseEntity.ok(resp);
@@ -81,6 +88,13 @@ public class AuthController {
             // Extract role by removing ROLE_ prefix
             String role = auth.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "").toUpperCase();
             user.put("role", role);
+            
+            if (auth.getPrincipal() instanceof com.desibites.security.CustomUserDetails) {
+                com.desibites.security.CustomUserDetails userDetails = (com.desibites.security.CustomUserDetails) auth.getPrincipal();
+                if (userDetails.getRestaurantId() != null) {
+                    user.put("restaurantId", userDetails.getRestaurantId().toString());
+                }
+            }
             
             resp.put("user", user);
             return ResponseEntity.ok(resp);

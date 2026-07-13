@@ -47,6 +47,12 @@ export default function LoginPage() {
         if (email === 'admin@desibites.com' && password === 'password123') {
           login({ name: 'Admin User', role: 'MANAGER', email });
           navigate('/dashboard');
+        } else if (email === 'cashier@desibites.com' && password === 'password123') {
+          login({ name: 'Cashier User', role: 'CASHIER', email });
+          navigate('/dashboard');
+        } else if (email === 'kitchen@desibites.com' && password === 'password123') {
+          login({ name: 'Kitchen Staff', role: 'KITCHEN', email });
+          navigate('/kitchen');
         } else {
           setError('Invalid email or password (Local Fallback)');
         }
@@ -110,15 +116,18 @@ export default function LoginPage() {
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>
           
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">
-              Demo Credentials:
+          <Box sx={{ mt: 2, textAlign: 'center', backgroundColor: 'rgba(0,0,0,0.02)', p: 2, borderRadius: 2 }}>
+            <Typography variant="body2" color="text.secondary" fontWeight="bold" gutterBottom>
+              Demo Credentials (Password: password123):
             </Typography>
             <Typography variant="caption" color="text.secondary" display="block">
-              Email: admin@desibites.com
+              Manager: <b>admin@desibites.com</b>
             </Typography>
             <Typography variant="caption" color="text.secondary" display="block">
-              Password: password123
+              Cashier: <b>cashier@desibites.com</b>
+            </Typography>
+            <Typography variant="caption" color="text.secondary" display="block">
+              Kitchen (KOT): <b>kitchen@desibites.com</b>
             </Typography>
           </Box>
         </Box>
