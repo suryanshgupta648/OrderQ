@@ -128,7 +128,7 @@ export default function KitchenPortal() {
         )}
         {order.status === 'READY' && (
           <div className="w-full bg-emerald-50 border-2 border-emerald-200 text-emerald-600 text-xl font-black py-5 rounded-2xl flex justify-center items-center gap-3">
-            WAITING FOR PICKUP
+            COMPLETED
           </div>
         )}
       </div>
