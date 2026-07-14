@@ -58,9 +58,9 @@ export default function KitchenPortal() {
   };
 
   // Only show active orders in the kitchen
-  const activeOrders = orders.filter(o => ['PENDING', 'PREPARING', 'READY'].includes(o.status));
+  const activeOrders = orders.filter(o => ['ACCEPTED', 'PREPARING', 'READY'].includes(o.status));
   
-  const newOrders = activeOrders.filter(o => o.status === 'PENDING').sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+  const newOrders = activeOrders.filter(o => o.status === 'ACCEPTED').sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
   const preparingOrders = activeOrders.filter(o => o.status === 'PREPARING').sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
   const readyOrders = activeOrders.filter(o => o.status === 'READY').sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
 
@@ -110,7 +110,7 @@ export default function KitchenPortal() {
       )}
 
       <div>
-        {order.status === 'PENDING' && (
+        {order.status === 'ACCEPTED' && (
           <button 
             onClick={() => updateStatus(order.id, 'PREPARING')}
             className="w-full bg-slate-900 hover:bg-black text-white text-xl font-black py-5 rounded-2xl transition-colors flex justify-center items-center gap-3"

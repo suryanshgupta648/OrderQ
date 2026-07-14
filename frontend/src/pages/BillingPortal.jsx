@@ -199,6 +199,7 @@ export default function BillingPortal() {
 
   const onlineOrders = orders.filter(o => o.status === 'PENDING').sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
   const activeWaiterCalls = waiterRequests.filter(r => r.status === 'PENDING' || r.status === 'WAITING');
+  const readyOrders = orders.filter(o => o.status === 'READY').sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
 
   const formatTime = (isoString) => new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -318,6 +319,35 @@ export default function BillingPortal() {
           )}
         </AnimatePresence>
 
+        {/* Ready Orders Banner */}
+        <AnimatePresence>
+          {readyOrders.length > 0 && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              className="bg-emerald-50 border-b border-emerald-200 shrink-0"
+            >
+              <div className="px-6 py-3 flex gap-4 overflow-x-auto hide-scrollbar">
+                {readyOrders.map(order => (
+                  <div key={order.id} className="bg-white px-4 py-2 rounded-xl border border-emerald-200 shadow-sm flex items-center gap-4 shrink-0">
+                    <div className="flex items-center gap-2">
+                      <Check size={16} className="text-emerald-600 animate-pulse" />
+                      <span className="font-bold text-slate-800 text-sm">Table {order.tableNumber}</span>
+                    </div>
+                    <span className="text-sm text-emerald-600 font-bold">READY TO SERVE</span>
+                    <button 
+                      onClick={() => updateOrderStatus(order.id, 'COMPLETED')}
+                      className="ml-2 px-3 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                    >
+                      SERVE & CLOSE
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Main Content */}
         <div className="flex-1 overflow-hidden flex">
           
@@ -357,10 +387,10 @@ export default function BillingPortal() {
                       
                       <div className="flex gap-3">
                         <button 
-                          onClick={() => updateOrderStatus(order.id, 'PREPARING')}
+                          onClick={() => updateOrderStatus(order.id, 'ACCEPTED')}
                           className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2"
                         >
-                          <Check size={18} /> Accept & Print
+                          <Check size={18} /> Approve & Print
                         </button>
                         <button 
                           onClick={() => updateOrderStatus(order.id, 'REJECTED')}

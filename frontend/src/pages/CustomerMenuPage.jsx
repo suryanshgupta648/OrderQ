@@ -464,6 +464,30 @@ export default function CustomerMenu() {
       );
     }
 
+    if (currentOrder.status === 'ACCEPTED') {
+      return (
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+          <div className="bg-indigo-100 text-indigo-800 p-4 rounded-full mb-6 mt-12">
+            <svg className="w-12 h-12 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <Typography variant="h4" className="mb-2 font-bold text-gray-900">Order Approved!</Typography>
+          <Typography variant="body1" className="text-gray-600 max-w-md">
+            Your order for {tableNumber === 'Takeaway' ? 'Takeaway' : `Table ${tableNumber}`} has been approved and is waiting for the kitchen to start.
+          </Typography>
+          {renderOrderDetails(currentOrder)}
+          <Button 
+            variant="outlined" 
+            onClick={() => setViewingOrderId(null)}
+            sx={{ borderRadius: '9999px', px: 4, py: 1.5, mb: 12 }}
+          >
+            {showHistory ? 'Back to History' : 'Back to Menu'}
+          </Button>
+        </div>
+      );
+    }
+
     if (currentOrder.status === 'PREPARING') {
       return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
@@ -488,17 +512,41 @@ export default function CustomerMenu() {
       );
     }
 
-    if (currentOrder.status === 'COMPLETED') {
+    if (currentOrder.status === 'READY') {
       return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
-          <div className="bg-green-100 text-green-800 p-4 rounded-full mb-6 mt-12">
+          <div className="bg-emerald-100 text-emerald-800 p-4 rounded-full mb-6 mt-12">
             <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <Typography variant="h4" className="mb-2 font-bold text-gray-900">Order Ready!</Typography>
           <Typography variant="body1" className="text-gray-600 max-w-md">
-            Your order for {tableNumber === 'Takeaway' ? 'Takeaway' : `Table ${tableNumber}`} is ready. {showHistory && 'It has been served.'}
+            Your order for {tableNumber === 'Takeaway' ? 'Takeaway' : `Table ${tableNumber}`} is ready and will be brought to you shortly!
+          </Typography>
+          {renderOrderDetails(currentOrder)}
+          <Button 
+            variant="outlined" 
+            onClick={() => setViewingOrderId(null)}
+            sx={{ borderRadius: '9999px', px: 4, py: 1.5, mb: 12 }}
+          >
+            {showHistory ? 'Back to History' : 'Back to Menu'}
+          </Button>
+        </div>
+      );
+    }
+
+    if (currentOrder.status === 'COMPLETED') {
+      return (
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+          <div className="bg-gray-200 text-gray-800 p-4 rounded-full mb-6 mt-12">
+            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <Typography variant="h4" className="mb-2 font-bold text-gray-900">Order Served</Typography>
+          <Typography variant="body1" className="text-gray-600 max-w-md">
+            Your order for {tableNumber === 'Takeaway' ? 'Takeaway' : `Table ${tableNumber}`} has been served. Hope you enjoyed your meal!
           </Typography>
           {renderOrderDetails(currentOrder)}
           <Button 
@@ -592,8 +640,10 @@ export default function CustomerMenu() {
                         <Typography variant="body2" className="font-bold text-gray-900">{order.id}</Typography>
                         <Typography variant="caption" className="text-gray-500 font-medium block">
                           {order.status === 'PENDING' ? 'Waiting Confirmation...' : 
+                           order.status === 'ACCEPTED' ? 'Approved, waiting for kitchen...' :
                            order.status === 'PREPARING' ? 'Preparing...' : 
-                           order.status === 'COMPLETED' ? 'Served / Ready' : 'Rejected'}
+                           order.status === 'READY' ? 'Ready to Serve' :
+                           order.status === 'COMPLETED' ? 'Served / Paid' : 'Rejected'}
                         </Typography>
                       </div>
                       <div className="flex items-center gap-3">
