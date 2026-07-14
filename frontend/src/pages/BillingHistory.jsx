@@ -30,6 +30,8 @@ export default function BillingHistory() {
       }
     };
     fetchHistory();
+    const interval = setInterval(fetchHistory, 5000);
+    return () => clearInterval(interval);
   }, [user]);
 
   const handlePrintAgain = (order) => {
@@ -146,9 +148,16 @@ export default function BillingHistory() {
                       <span className="text-sm font-extrabold text-slate-800">{order.tableNumber}</span>
                     </div>
                     <div>
-                      <p className="font-extrabold text-slate-900 text-lg">
-                        {order.invoiceNumber || `#${order.id.split('-')[1]}`}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-extrabold text-slate-900 text-lg">
+                          {order.invoiceNumber || `#${order.id.split('-')[1]}`}
+                        </p>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${
+                          order.orderType === 'MANUAL' ? 'bg-amber-100 text-amber-700' : 'bg-indigo-100 text-indigo-700'
+                        }`}>
+                          {order.orderType || 'ONLINE'}
+                        </span>
+                      </div>
                       <p className="text-xs font-medium text-slate-500 flex items-center gap-1 mt-0.5">
                         <Clock size={12} /> {formatTime(order.timestamp)} • Cashier: {order.cashierName || 'System'}
                       </p>

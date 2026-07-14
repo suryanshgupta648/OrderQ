@@ -50,6 +50,7 @@ export default function BillingPortal() {
         
         if (ordersRes.ok) {
           const rawOrders = await ordersRes.json();
+          if (isMutating.current) return;
           setOrders(prev => {
             if (rawOrders.length > prev.length) playBeep();
             return Array.from(new Map(rawOrders.map(o => [o.id, o])).values());

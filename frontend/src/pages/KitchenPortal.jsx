@@ -2,12 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChefHat, CheckCircle, Clock, Utensils, ChevronLeft, ArrowRight } from 'lucide-react';
+import { ChefHat, CheckCircle, Clock, Utensils, ArrowRight, LogOut } from 'lucide-react';
 import { playBeep } from '../utils/audio';
 
 export default function KitchenPortal() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [orders, setOrders] = useState([]);
   const [pulsingOrders, setPulsingOrders] = useState(new Set());
   const isMutating = useRef(false);
@@ -20,6 +20,7 @@ export default function KitchenPortal() {
         const res = await fetch('/api/orders', { headers });
         if (res.ok) {
           const rawOrders = await res.json();
+          if (isMutating.current) return;
           setOrders(prev => {
             if (rawOrders.length > prev.length) {
               playBeep();
@@ -139,8 +140,8 @@ export default function KitchenPortal() {
     <div className="flex flex-col h-screen bg-slate-100 overflow-hidden font-sans">
       <header className="h-[80px] bg-slate-900 text-white px-8 flex items-center justify-between shrink-0 shadow-lg relative z-20">
         <div className="flex items-center gap-6">
-          <button onClick={() => navigate('/dashboard')} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
-            <ChevronLeft size={28} />
+          <button onClick={logout} className="p-2 bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 rounded-xl transition-colors">
+            <LogOut size={28} />
           </button>
           <div className="flex items-center gap-3">
             <ChefHat size={36} className="text-emerald-400" />
